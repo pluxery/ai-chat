@@ -21,7 +21,7 @@ class ChatController extends Controller
             ->get();
 
         return Inertia::render('Chat', [
-            'chats' => $chats->map(fn ($chat) => [
+            'chats' => $chats->map(fn($chat) => [
                 'id' => $chat->id,
                 'title' => $chat->title ?? 'New Chat',
                 'message_count' => $chat->messages_count,
@@ -41,7 +41,7 @@ class ChatController extends Controller
             ->firstOrFail();
 
         return response()->json([
-            'messages' => $chat->messages->map(fn ($message) => [
+            'messages' => $chat->messages->map(fn($message) => [
                 'id' => $message->id,
                 'role' => $message->role,
                 'content' => $message->content,
@@ -103,13 +103,7 @@ class ChatController extends Controller
     private function generateAiResponse(string $message): string
     {
         // TODO: Integrate with actual AI service (OpenAI, DeepSeek, etc.)
-        $responses = [
-            "That's an interesting question! Let me think about it...",
-            "I'd be happy to help you with that. Here's what I know:",
-            'Great question! Based on my understanding, I can explain it this way:',
-            'Thank you for asking. Let me provide you with a detailed answer:',
-        ];
 
-        return $responses[array_rand($responses)]."\n\nThis is a placeholder response. Please integrate with your preferred AI service (OpenAI, DeepSeek, etc.) in the ChatController.";
+        return 'Это сложный вопрос, я не знаю. ';
     }
 }

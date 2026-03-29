@@ -359,7 +359,7 @@ onMounted(() => {
                                         <span class="font-semibold">{{
                                             message.role === 'user'
                                                 ? 'You'
-                                                : 'AI Assistant'
+                                                : 'Химчик AI'
                                         }}</span>
                                         <span
                                             class="text-xs text-muted-foreground"
