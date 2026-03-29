@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, nextTick, onMounted } from 'vue';
-import { Send, Bot, User, Loader2, Plus, MessageSquare } from 'lucide-vue-next';
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Bot, Loader2, MessageSquare, Plus, Send, User } from 'lucide-vue-next';
+import { nextTick, onMounted, ref } from 'vue';
+
 import { Button } from '@/components/ui/button';
-import { chat } from '@/routes';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 interface Message {
     id: string;
@@ -48,8 +48,10 @@ const currentMessages = ref<Message[]>([]);
 
 const scrollToBottom = async () => {
     await nextTick();
+
     if (messagesContainerRef.value) {
-        messagesContainerRef.value.scrollTop = messagesContainerRef.value.scrollHeight;
+        messagesContainerRef.value.scrollTop =
+            messagesContainerRef.value.scrollHeight;
     }
 };
 
@@ -65,14 +67,15 @@ const loadConversation = async (chatId: string) => {
     isLoading.value = true;
 
     try {
-        const response = await fetch(`${chat.send()}/${chatId}`, {
+        const response = await fetch('chat/' + chatId, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': document.cookie
-                    .split('; ')
-                    .find((row) => row.startsWith('XSRF-TOKEN='))
-                    ?.split('=')[1] || '',
+                'X-XSRF-TOKEN':
+                    document.cookie
+                        .split('; ')
+                        .find((row) => row.startsWith('XSRF-TOKEN='))
+                        ?.split('=')[1] || '',
             },
         });
 
@@ -113,15 +116,16 @@ const sendMessage = async () => {
     await scrollToBottom();
 
     try {
-        const response = await fetch(chat.send(), {
+        const response = await fetch('chat/send', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': document.cookie
-                    .split('; ')
-                    .find((row) => row.startsWith('XSRF-TOKEN='))
-                    ?.split('=')[1] || '',
+                'X-XSRF-TOKEN':
+                    document.cookie
+                        .split('; ')
+                        .find((row) => row.startsWith('XSRF-TOKEN='))
+                        ?.split('=')[1] || '',
             },
             body: JSON.stringify({
                 message: userMessageContent,
@@ -151,16 +155,22 @@ const sendMessage = async () => {
 
             const newConversation: Chat = {
                 id: data.conversation_id,
-                title: userMessageContent.slice(0, 50) + (userMessageContent.length > 50 ? '...' : ''),
+                title:
+                    userMessageContent.slice(0, 50) +
+                    (userMessageContent.length > 50 ? '...' : ''),
                 message_count: 2,
                 updated_at: new Date().toISOString(),
             };
             conversations.value.unshift(newConversation);
         } else {
-            const convIndex = conversations.value.findIndex((c) => c.id === currentChatId.value);
+            const convIndex = conversations.value.findIndex(
+                (c) => c.id === currentChatId.value,
+            );
+
             if (convIndex !== -1) {
                 conversations.value[convIndex].message_count += 2;
-                conversations.value[convIndex].updated_at = new Date().toISOString();
+                conversations.value[convIndex].updated_at =
+                    new Date().toISOString();
             }
         }
     } catch (error) {
@@ -196,8 +206,12 @@ onMounted(() => {
     <AppLayout>
         <div class="flex h-[calc(100vh-4rem)]">
             <!-- Sidebar - Conversations List -->
-            <aside class="hidden w-72 flex-col border-r border-sidebar-border/70 bg-sidebar md:flex">
-                <div class="flex h-14 items-center gap-2 border-b border-sidebar-border/70 px-4">
+            <aside
+                class="hidden w-72 flex-col border-r border-sidebar-border/70 bg-sidebar md:flex"
+            >
+                <div
+                    class="flex h-14 items-center gap-2 border-b border-sidebar-border/70 px-4"
+                >
                     <Button
                         variant="outline"
                         size="sm"
@@ -209,7 +223,10 @@ onMounted(() => {
                     </Button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2">
-                    <div v-if="conversations.length === 0" class="px-2 py-4 text-sm text-muted-foreground">
+                    <div
+                        v-if="conversations.length === 0"
+                        class="px-2 py-4 text-sm text-muted-foreground"
+                    >
                         <div class="flex items-center gap-2">
                             <MessageSquare class="h-4 w-4" />
                             <span>No conversations yet</span>
@@ -243,44 +260,72 @@ onMounted(() => {
                         v-if="currentMessages.length === 0"
                         class="flex h-full flex-col items-center justify-center p-8 text-center"
                     >
-                        <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                        <div
+                            class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
+                        >
                             <Bot class="h-8 w-8 text-primary" />
                         </div>
-                        <h2 class="text-2xl font-semibold">How can I help you today?</h2>
+                        <h2 class="text-2xl font-semibold">
+                            How can I help you today?
+                        </h2>
                         <p class="mt-2 max-w-md text-muted-foreground">
-                            I'm your AI assistant. Ask me anything, and I'll do my best to provide helpful information.
+                            I'm your AI assistant. Ask me anything, and I'll do
+                            my best to provide helpful information.
                         </p>
-                        <div class="mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div
+                            class="mt-8 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2"
+                        >
                             <Button
                                 variant="outline"
                                 @click="
-                                    form.message = 'Explain quantum computing in simple terms';
+                                    form.message =
+                                        'Explain quantum computing in simple terms';
                                     sendMessage();
                                 "
                                 class="h-auto py-3 text-left"
                             >
-                                <span class="line-clamp-2">Explain quantum computing in simple terms</span>
+                                <span class="line-clamp-2"
+                                    >Explain quantum computing in simple
+                                    terms</span
+                                >
                             </Button>
                             <Button
                                 variant="outline"
-                                @click="form.message = 'What are the benefits of meditation?'; sendMessage()"
+                                @click="
+                                    form.message =
+                                        'What are the benefits of meditation?';
+                                    sendMessage();
+                                "
                                 class="h-auto py-3 text-left"
                             >
-                                <span class="line-clamp-2">What are the benefits of meditation?</span>
+                                <span class="line-clamp-2"
+                                    >What are the benefits of meditation?</span
+                                >
                             </Button>
                             <Button
                                 variant="outline"
-                                @click="form.message = 'Help me write a professional email'; sendMessage()"
+                                @click="
+                                    form.message =
+                                        'Help me write a professional email';
+                                    sendMessage();
+                                "
                                 class="h-auto py-3 text-left"
                             >
-                                <span class="line-clamp-2">Help me write a professional email</span>
+                                <span class="line-clamp-2"
+                                    >Help me write a professional email</span
+                                >
                             </Button>
                             <Button
                                 variant="outline"
-                                @click="form.message = 'What is machine learning?'; sendMessage()"
+                                @click="
+                                    form.message = 'What is machine learning?';
+                                    sendMessage();
+                                "
                                 class="h-auto py-3 text-left"
                             >
-                                <span class="line-clamp-2">What is machine learning?</span>
+                                <span class="line-clamp-2"
+                                    >What is machine learning?</span
+                                >
                             </Button>
                         </div>
                     </div>
@@ -294,21 +339,39 @@ onMounted(() => {
                             <div class="mx-auto flex max-w-4xl gap-4">
                                 <div
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                                    :class="message.role === 'user' ? 'bg-primary/10' : 'bg-secondary'"
+                                    :class="
+                                        message.role === 'user'
+                                            ? 'bg-primary/10'
+                                            : 'bg-secondary'
+                                    "
                                 >
-                                    <User v-if="message.role === 'user'" class="h-5 w-5 text-primary" />
-                                    <Bot v-else class="h-5 w-5 text-secondary-foreground" />
+                                    <User
+                                        v-if="message.role === 'user'"
+                                        class="h-5 w-5 text-primary"
+                                    />
+                                    <Bot
+                                        v-else
+                                        class="h-5 w-5 text-secondary-foreground"
+                                    />
                                 </div>
                                 <div class="flex-1 space-y-2">
                                     <div class="flex items-center gap-2">
                                         <span class="font-semibold">{{
-                                            message.role === 'user' ? 'You' : 'AI Assistant'
+                                            message.role === 'user'
+                                                ? 'You'
+                                                : 'AI Assistant'
                                         }}</span>
-                                        <span class="text-xs text-muted-foreground">
-                                            {{ message.timestamp.toLocaleTimeString() }}
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {{
+                                                message.timestamp.toLocaleTimeString()
+                                            }}
                                         </span>
                                     </div>
-                                    <div class="whitespace-pre-wrap text-sm leading-relaxed">
+                                    <div
+                                        class="text-sm leading-relaxed whitespace-pre-wrap"
+                                    >
                                         {{ message.content }}
                                     </div>
                                 </div>
@@ -316,16 +379,27 @@ onMounted(() => {
                         </div>
 
                         <!-- Loading Indicator -->
-                        <div v-if="isLoading" class="border-b border-sidebar-border/30 p-6">
+                        <div
+                            v-if="isLoading"
+                            class="border-b border-sidebar-border/30 p-6"
+                        >
                             <div class="mx-auto flex max-w-4xl gap-4">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary">
-                                    <Loader2 class="h-5 w-5 animate-spin text-secondary-foreground" />
+                                <div
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary"
+                                >
+                                    <Loader2
+                                        class="h-5 w-5 animate-spin text-secondary-foreground"
+                                    />
                                 </div>
                                 <div class="flex-1 space-y-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-semibold">AI Assistant</span>
+                                        <span class="font-semibold"
+                                            >AI Assistant</span
+                                        >
                                     </div>
-                                    <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <div
+                                        class="flex items-center gap-1 text-sm text-muted-foreground"
+                                    >
                                         <span
                                             class="h-2 w-2 animate-bounce rounded-full bg-current"
                                             style="animation-delay: 0ms"
@@ -346,7 +420,9 @@ onMounted(() => {
                 </div>
 
                 <!-- Input Area -->
-                <div class="border-t border-sidebar-border/70 bg-background p-4">
+                <div
+                    class="border-t border-sidebar-border/70 bg-background p-4"
+                >
                     <div class="mx-auto flex max-w-4xl items-end gap-2">
                         <div class="relative flex-1">
                             <textarea
@@ -354,18 +430,23 @@ onMounted(() => {
                                 @keydown="handleKeyPress"
                                 placeholder="Type your message..."
                                 rows="1"
-                                class="flex w-full resize-none rounded-md border border-input bg-transparent px-4 py-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 max-h-48 overflow-y-auto"
+                                class="flex max-h-48 w-full resize-none overflow-y-auto rounded-md border border-input bg-transparent px-4 py-3 text-sm shadow-sm focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                 style="min-height: 48px"
                                 :disabled="isLoading"
                             />
                         </div>
-                        <Button @click="sendMessage" :disabled="!form.message.trim() || isLoading" size="icon">
+                        <Button
+                            @click="sendMessage"
+                            :disabled="!form.message.trim() || isLoading"
+                            size="icon"
+                        >
                             <Send v-if="!isLoading" class="h-4 w-4" />
                             <Loader2 v-else class="h-4 w-4 animate-spin" />
                         </Button>
                     </div>
                     <p class="mt-2 text-center text-xs text-muted-foreground">
-                        AI can make mistakes. Consider checking important information.
+                        AI can make mistakes. Consider checking important
+                        information.
                     </p>
                 </div>
             </main>
