@@ -1,0 +1,113 @@
+version: '3'
+
+env:
+  DOCKER_COMPOSE_FILEPATH: docker-compose.local.yml
+  CONTAINER_PROXY_NAME: traefik-dvfu
+  CONTAINER_PROXY_NETWORK: traefik-net
+  USERID:
+    sh: id -u
+  GROUPID:
+    sh: id -g
+
+tasks:
+  deploy:
+    desc: "[interface] Build images, install dependencies, prepare env, and start the project"
+    cmds:
+      - task: project_deploy
+
+  build:
+    desc: "[interface] Build docker images"
+    cmds:
+      - task: project_build
+
+  containers:
+    desc: "[interface] Forward commands to docker compose"
+    cmds:
+      - task: project_containers
+        vars:
+          CONTAINERS_COMMAND:
+            sh: echo "{{.CONTAINERS_COMMAND}}"
+
+  command:
+    desc: "[interface] Run a command inside the application container"
+    cmds:
+      - task: project_command
+        vars:
+          APP_COMMAND:
+            sh: echo "{{.APP_COMMAND}}"
+
+  start:
+    desc: "[interface] Start project containers"
+    cmds:
+      - task: project_start
+
+  stop:
+    desc: "[interface] Stop project containers"
+    cmds:
+      - task: project_stop
+
+  start-all:
+    desc: "[interface] Start proxy and project containers"
+    cmds:
+      - task: start-proxy
+      - task: start
+
+  stop-all:
+    desc: "[interface] Stop project containers and proxy"
+    cmds:
+      - task: stop
+      - task: stop-proxy
+
+  start-proxy:
+    desc: "Start a local Traefik proxy for *.dvfu.local domains"
+    cmds:
+      - task: base_create_docker_network
+        vars:
+          NETWORK_NAME:
+            sh: echo "{{.CONTAINER_PROXY_NETWORK}}"
+      - >-
+        (docker rm -f {{.CONTAINER_PROXY_NAME}} >/dev/null 2>&1 || true; docker run --net {{.CONTAINER_PROXY_NETWORK}}
+        --name {{.CONTAINER_PROXY_NAME}}
+        -d
+        --restart unless-stopped
+        -l 'traefik.enable=true'
+        -l 'traefik.http.routers.dashboard.rule=Host(`traefik.dvfu.local`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))'
+        -l traefik.http.routers.dashboard.service=api@internal
+        -p 80:80
+        -v /var/run/docker.sock:/var/run/docker.sock
+        traefik:v3 --providers.docker=true --providers.docker.exposedbydefault=false --entrypoints.web.address=:80 --api.dashboard=true --log.level=debug)
+
+  stop-proxy:
+    desc: "Stop the local Traefik proxy"
+    cmds:
+      - docker stop {{.CONTAINER_PROXY_NAME}}
+
+  base_start:
+    internal: true
+    cmds:
+      - task: base_containers
+        vars:
+          CONTAINERS_COMMAND:
+            sh: echo "up -d {{.CLI_ARGS}}"
+
+  base_stop:
+    internal: true
+    cmds:
+      - task: base_containers
+        vars:
+          CONTAINERS_COMMAND: stop
+
+  base_containers:
+    internal: true
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILEPATH}} {{.CONTAINERS_COMMAND | default .CLI_ARGS}}
+
+  base_command:
+    internal: true
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILEPATH}} exec -u {{.USERID}}:{{.GROUPID}} -w {{.APP_WORKING_DIR}} {{.SERVICE_APP}} {{.APP_COMMAND | default .CLI_ARGS}}
+
+  base_create_docker_network:
+    internal: true
+    cmds:
+      - docker network inspect {{.NETWORK_NAME}} -f {{`{{.Id}}`}} 2>/dev/null || docker network create {{.NETWORK_NAME}}

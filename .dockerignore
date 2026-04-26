@@ -1,0 +1,10 @@
+.git
+.idea
+.task
+node_modules
+vendor
+public/build
+bootstrap/ssr
+storage
+.env
+docker-compose*.yml

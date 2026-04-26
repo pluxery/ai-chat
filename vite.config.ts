@@ -5,6 +5,17 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    server: {
+        host: process.env.VITE_HOST ?? '127.0.0.1',
+        port: Number(process.env.VITE_PORT ?? 5173),
+        strictPort: true,
+        hmr: {
+            host: process.env.VITE_HMR_HOST ?? '127.0.0.1',
+        },
+        cors: {
+            origin: /http:\/\/chemistry-ai\.dvfu\.local(?::\d+)?$/,
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],

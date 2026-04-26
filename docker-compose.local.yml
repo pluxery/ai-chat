@@ -1,0 +1,59 @@
+name: ai-chat
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-ai-chat}-app
+    working_dir: ${APP_WORKING_DIR:-/var/www}
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-net
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-ai-chat}-app.rule=Host(`${APP_HOSTNAME:-chemistry-ai.dvfu.local}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-ai-chat}-app.entrypoints=web
+      - traefik.http.services.${COMPOSE_PROJECT_NAME:-ai-chat}-app.loadbalancer.server.port=8000
+    environment:
+      APP_ENV: local
+      APP_URL: http://${APP_HOSTNAME:-chemistry-ai.dvfu.local}
+      VITE_DEV_SERVER_URL: http://${APP_HOSTNAME:-chemistry-ai.dvfu.local}
+    volumes:
+      - .:${APP_WORKING_DIR:-/var/www}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - default
+      - traefik-net
+
+  vite:
+    image: ai-chat-app
+    container_name: ${COMPOSE_PROJECT_NAME:-ai-chat}-vite
+    working_dir: ${APP_WORKING_DIR:-/var/www}
+    command: npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}
+    ports:
+      - '${VITE_PORT:-5173}:5173'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-net
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-ai-chat}-vite.rule=Host(`${APP_HOSTNAME:-chemistry-ai.dvfu.local}`) && (PathPrefix(`/@vite`) || PathPrefix(`/resources`) || PathPrefix(`/node_modules`) || PathPrefix(`/@fs`))
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME:-ai-chat}-vite.entrypoints=web
+      - traefik.http.services.${COMPOSE_PROJECT_NAME:-ai-chat}-vite.loadbalancer.server.port=5173
+    environment:
+      CHOKIDAR_USEPOLLING: 'true'
+      VITE_HOST: 0.0.0.0
+      VITE_HMR_HOST: ${APP_HOSTNAME:-chemistry-ai.dvfu.local}
+      VITE_PORT: ${VITE_PORT:-5173}
+    volumes:
+      - .:${APP_WORKING_DIR:-/var/www}
+      - node_modules:${APP_WORKING_DIR:-/var/www}/node_modules
+    networks:
+      - default
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true
+
+volumes:
+  node_modules:

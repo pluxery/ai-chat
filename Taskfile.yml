@@ -1,0 +1,106 @@
+version: '3'
+
+includes:
+  base:
+    taskfile: ./Taskfile-base.yml
+    flatten: true
+
+env:
+  SERVICE_APP: app
+  SERVICE_VITE: vite
+  APP_WORKING_DIR: /var/www
+  COMPOSE_PROJECT_NAME: ai-chat
+  APP_HOSTNAME: chemistry-ai.dvfu.local
+  APP_PORT: '8000'
+  VITE_PORT: '5173'
+
+tasks:
+  default:
+    cmd: task --list
+    silent: true
+
+  composer:
+    desc: "Run a composer command in the app container"
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILEPATH}} run --rm -u {{.USERID}}:{{.GROUPID}} -w {{.APP_WORKING_DIR}} {{.SERVICE_APP}} composer {{.COMPOSER_COMMAND | default .CLI_ARGS}}
+
+  artisan:
+    desc: "Run an artisan command in the app container"
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILEPATH}} run --rm -u {{.USERID}}:{{.GROUPID}} -w {{.APP_WORKING_DIR}} {{.SERVICE_APP}} php artisan {{.ARTISAN_COMMAND | default .CLI_ARGS}}
+
+  php:
+    desc: "Run a PHP command in the app container"
+    cmds:
+      - task: command
+        vars:
+          APP_COMMAND:
+            sh: echo "php {{.PHP_COMMAND | default .CLI_ARGS}}"
+
+  npm:
+    desc: "Run an npm command in the Vite container"
+    cmds:
+      - docker compose -f {{.DOCKER_COMPOSE_FILEPATH}} run --rm -w {{.APP_WORKING_DIR}} {{.SERVICE_VITE}} npm {{.NPM_COMMAND | default .CLI_ARGS}}
+
+  create_env_file:
+    cmds:
+      - test -f .env || cp .env.example .env
+      - test -f database/database.sqlite || touch database/database.sqlite
+
+  project_build:
+    internal: true
+    cmds:
+      - task: containers
+        vars:
+          CONTAINERS_COMMAND: build
+
+  project_deploy:
+    internal: true
+    cmds:
+      - task: create_env_file
+      - task: project_build
+      - task: composer
+        vars:
+          COMPOSER_COMMAND: install
+      - task: npm
+        vars:
+          NPM_COMMAND: install
+      - task: artisan
+        vars:
+          ARTISAN_COMMAND: key:generate
+      - task: artisan
+        vars:
+          ARTISAN_COMMAND: migrate --force
+      - task: containers
+        vars:
+          CONTAINERS_COMMAND: up -d
+
+  project_start:
+    internal: true
+    cmds:
+      - task: base_start
+
+  project_stop:
+    internal: true
+    cmds:
+      - task: base_stop
+
+  project_containers:
+    internal: true
+    cmds:
+      - task: base_containers
+        vars:
+          CONTAINERS_COMMAND:
+            sh: echo "{{.CONTAINERS_COMMAND}}"
+
+  project_command:
+    internal: true
+    deps:
+      - task: containers
+        vars:
+          CONTAINERS_COMMAND: up -d app
+    cmds:
+      - task: base_command
+        vars:
+          APP_COMMAND:
+            sh: echo "{{.APP_COMMAND}}"
