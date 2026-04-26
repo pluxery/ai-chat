@@ -55,22 +55,21 @@ class ChatController extends Controller
      */
     public function send(Request $request)
     {
-        $validated = $request->validate([
-            'message' => 'required|string|max:10000',
-            'conversation_id' => 'nullable|string|uuid',
-        ]);
+
+        $data = $request->json()->all();
+
 
         $user = Auth::user();
 
         // Find or create chat
-        if ($validated['conversation_id']) {
-            $chat = Chat::where('id', $validated['conversation_id'])
+        if ($data['conversation_id']) {
+            $chat = Chat::where('id', $data['conversation_id'])
                 ->where('user_id', $user->id)
                 ->firstOrFail();
         } else {
             $chat = Chat::create([
                 'user_id' => $user->id,
-                'title' => substr($validated['message'], 0, 50),
+                'title' => substr($data['message'], 0, 50),
             ]);
         }
 
@@ -78,11 +77,11 @@ class ChatController extends Controller
         Message::create([
             'chat_id' => $chat->id,
             'role' => 'user',
-            'content' => $validated['message'],
+            'content' => $data['message'],
         ]);
 
         // Generate AI response
-        $response = $this->generateAiResponse($validated['message']);
+        $response = $this->generateAiResponse($data['message']);
 
         // Save AI response
         Message::create([

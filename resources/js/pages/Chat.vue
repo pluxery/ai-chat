@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import Cookies from 'js-cookie';
 import { Bot, Loader2, MessageSquare, Plus, Send, User } from 'lucide-vue-next';
 import { nextTick, onMounted, ref } from 'vue';
 
+import chatController from '@/actions/App/Http/Controllers/ChatController';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 
@@ -67,15 +69,12 @@ const loadConversation = async (chatId: string) => {
     isLoading.value = true;
 
     try {
-        const response = await fetch('chat/' + chatId, {
-            method: 'GET',
+        const route = chatController.show(chatId);
+
+        const response = await fetch(route.url, {
+            method: route.method,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN':
-                    document.cookie
-                        .split('; ')
-                        .find((row) => row.startsWith('XSRF-TOKEN='))
-                        ?.split('=')[1] || '',
+                'X-XSRF-TOKEN': decodeURIComponent(Cookies.get('XSRF-TOKEN')),
             },
         });
 
@@ -116,16 +115,11 @@ const sendMessage = async () => {
     await scrollToBottom();
 
     try {
-        const response = await fetch('chat/send', {
-            method: 'POST',
+        const route = chatController.send();
+        const response = await fetch(route.url, {
+            method: route.method,
             headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN':
-                    document.cookie
-                        .split('; ')
-                        .find((row) => row.startsWith('XSRF-TOKEN='))
-                        ?.split('=')[1] || '',
+                'X-XSRF-TOKEN': decodeURIComponent(Cookies.get('XSRF-TOKEN')),
             },
             body: JSON.stringify({
                 message: userMessageContent,
